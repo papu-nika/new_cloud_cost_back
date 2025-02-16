@@ -23,3 +23,7 @@ go.work.sum
 
 # env file
 .env
+
+
+## User Settings
+cmd/aggrgate_aws/price_file

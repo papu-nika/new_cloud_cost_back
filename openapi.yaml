@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: Cloud Cost Management API
+  description: API for managing cloud costs, tracking usage, and organizing services into projects.
+  version: 1.0.0
+servers:
+  - url: https://api.cloud-cost.com
+
+security:
+  - BearerAuth: []
+
+paths:
+  /aws/ec2/instances:
+    get:
+      summary: Get EC2 instances cost with optional filtering
+      parameters:
+        - name: region
+          in: query
+          description: Filter instance by region
+          schema:
+            $ref: "#/components/schemas/Region"
+        - name: os
+          in: query
+          description: Filter instance by name
+          schema:
+            $ref: "#/components/schemas/os"
+      responses:
+        "200":
+          description: List of instance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    regioncode:
+                      type: string
+                    instancetype:
+                      type: string
+                    instancefamily:
+                      type: string
+                    vcpu:
+                      type: number
+                    physicalprocessor:
+                      type: string
+                    clockspeed:
+                      type: string
+                    memory:
+                      type: number
+                    storage:
+                      type: string
+                    networkperformance:
+                      type: string
+                    operatingsystem:
+                      type: string
+                    tenancy:
+                      type: string
+                    dedicatedebsthroughput:
+                      type: string
+                    ecu:
+                      type: string
+                    gpumemory:
+                      type: string
+                    processorfeatures:
+                      type: string
+                    ondemandprice:
+                      type: number
+                    one_year_reserved_standard_price:
+                      type: number
+                    three_year_reserved_standard_price:
+                      type: number
+                    one_year_reserved_convertible_price:
+                      type: number
+                    three_year_reserved_convertible_price:
+                      type: number
+        "400":
+          description: Invalid input
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegionEnum:
+      type: string
+      enum:
+        - ap-south-1
+        - ap-south-2
+        - ap-northeast-1
+        - ap-northeast-2
+        - ap-northeast-3
+        - ap-southeast-1
+        - ap-southeast-2
+        - ap-southeast-3
+        - ap-southeast-4
+        - ap-east-1
+        - us-east-1
+        - us-east-2
+        - us-west-1
+        - us-west-2
+        - ca-central-1
+        - ca-west-1
+        - us-gov-east-1
+        - us-gov-west-1
+        - sa-east-1
+        - eu-west-1
+        - eu-west-2
+        - eu-west-3
+        - eu-central-1
+        - eu-central-2
+        - eu-north-1
+        - eu-south-1
+        - eu-south-2
+        - il-central-1
+        - af-south-1
+        - me-central-1
+        - me-south-1
+      x-oapi-codegen-extra-tags:
+        validate: "oneof=ap-south-1 ap-south-2 ap-northeast-1 ap-northeast-2 ap-northeast-3 ap-southeast-1 ap-southeast-2 ap-southeast-3 ap-southeast-4 ap-east-1 us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 ca-west-1 us-gov-east-1 us-gov-west-1 sa-east-1 eu-west-1 eu-west-2 eu-west-3 eu-central-1 eu-central-2 eu-north-1 eu-south-1 eu-south-2 il-central-1 af-south-1 me-central-1 me-south-1"
+    Region:
+      type: object
+      required:
+        - region
+      properties:
+        region:
+          $ref: "#/components/schemas/RegionEnum"
+
+    osEnum:
+      type: string
+      enum:
+        - linux
+        - windows
+        - ubuntu-pro
+        - rhel
+      x-oapi-codegen-extra-tags:
+        validate: "oneof=linux windows ubuntu-pro rhel"
+    os:
+      type: object
+      required:
+        - os
+      properties:
+        os:
+          $ref: "#/components/schemas/osEnum"
