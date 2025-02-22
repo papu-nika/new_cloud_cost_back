@@ -94,30 +94,23 @@ func getSliceAwsEc2Inctance(decoder *json.Decoder, len int) (instances []models.
 		// 値を読み込む
 		err = decoder.Decode(&product)
 		if err != nil {
-			log.Println(err, "3")
+			// log.Println(err, "3aaaa")　// 対象外のリージョンでエラーが発生するためコメントアウト
+			continue
 		}
 
-		if product.Attributes.Capacitystatus != "Used" {
+		if product.Attributes.Capacitystatus != "Used" ||
+			product.ProductFamily != "Compute Instance" ||
+			product.Attributes.Tenancy != "Shared" ||
+			product.Attributes.Preinstalledsw != "NA" ||
+			product.Attributes.Licensemodel != "No License required" {
 			continue
 		}
-		if product.ProductFamily != "Compute Instance" {
-			continue
-		}
-		if product.Attributes.Tenancy != "Shared" {
-			continue
-		}
-		if product.Attributes.Preinstalledsw != "NA" {
-			continue
-		}
-		if product.Attributes.Licensemodel != "No License required" {
-			continue
-		}
-		if slices.Contains(region.ENABLED_REGIONS, product.Attributes.Regioncode) == false {
+		if !slices.Contains(region.ENABLED_REGIONS, product.Attributes.Regioncode.String()) {
 			continue
 		}
 
 		product.Attributes.ID = product.Sku
-		if os := exchangeOS(product.Attributes.Operatingsystem); os == "" {
+		if os := exchangeOS(string(product.Attributes.Operatingsystem.String())); os == 0 {
 			i++
 			continue
 		} else {
@@ -182,8 +175,11 @@ func proccessPrices(priceChan <-chan []models.PriceDimensions, db *gorm.DB, wg *
 		for _, price := range prices {
 			for sku, p := range price {
 				for _, detail := range p.PriceDimensions {
-					// 1Year and and Standard and AllUpfront
-					if (p.TermAttributes.LeaseContractLength == "1yr" || p.TermAttributes.LeaseContractLength == "1 yr") &&
+					// Pass Partial Upfront
+					if p.TermAttributes.PurchaseOption == "Partial Upfront" || p.TermAttributes.PurchaseOption == "No Upfront" {
+						continue
+						// 1Year and and Standard and AllUpfront
+					} else if (p.TermAttributes.LeaseContractLength == "1yr" || p.TermAttributes.LeaseContractLength == "1 yr") &&
 						(p.TermAttributes.PurchaseOption == "AllUpfront" || p.TermAttributes.PurchaseOption == "All Upfront") &&
 						(p.TermAttributes.OfferingClass == "standard") {
 						if oneYearPrice, err := strconv.ParseFloat(detail.PricePerUnit["USD"], 64); err != nil {
@@ -198,7 +194,7 @@ func proccessPrices(priceChan <-chan []models.PriceDimensions, db *gorm.DB, wg *
 								panic(err)
 							}
 						}
-						// 3Year and and Standard and AllUpfront
+						// 3Year and and Sta	ndard and AllUpfront
 					} else if (p.TermAttributes.LeaseContractLength == "3yr" || p.TermAttributes.LeaseContractLength == "3 yr") &&
 						(p.TermAttributes.PurchaseOption == "AllUpfront" || p.TermAttributes.PurchaseOption == "All Upfront") &&
 						(p.TermAttributes.OfferingClass == "standard") {
@@ -311,17 +307,17 @@ func getPriceSlice(decoder *json.Decoder, length int) ([]models.PriceDimensions,
 	return prices, nil
 }
 
-func exchangeOS(os string) string {
+func exchangeOS(os string) models.Os {
 	switch os {
 	case "Linux":
-		return "linux"
-	case "RHEL":
-		return "rhel"
+		return models.OsLinux
+	// case "RHEL":
+	// 	return "rhel"
 	case "Windows":
-		return "windows"
-	case "Ubuntu Pro":
-		return "ubuntu-pro"
+		return models.OsWindows
+	// case "Ubuntu Pro":
+	// 	return "ubuntu-pro"
 	default:
-		return ""
+		return 0
 	}
 }

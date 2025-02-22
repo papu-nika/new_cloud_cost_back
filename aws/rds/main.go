@@ -2,15 +2,16 @@ package rds
 
 import (
 	"bufio"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/papu-nika/new_cloud_cost_back/aws/region"
 	"github.com/papu-nika/new_cloud_cost_back/db"
 	"github.com/papu-nika/new_cloud_cost_back/db/models"
 	"gorm.io/gorm"
@@ -106,7 +107,10 @@ func getSliceAwsRDSInctance(db *gorm.DB, decoder *json.Decoder, len int) (instan
 		// 値を読み込む
 		err = decoder.Decode(&product)
 		if err != nil {
-			log.Println(err, "3")
+			// log.Println(err, "3")
+		}
+		if !slices.Contains(region.ENABLED_REGIONS, product.Attributes.Regioncode.String()) {
+			continue
 		}
 
 		if product.ProductFamily != "Database Instance" {
@@ -120,21 +124,18 @@ func getSliceAwsRDSInctance(db *gorm.DB, decoder *json.Decoder, len int) (instan
 				} else {
 					serverlessV2.Isauroraiooptimizationmode = true
 				}
-				dbEngine := exchangeDBEngine(product.Attributes.Databaseengine)
-				if dbEngine == "" {
+				if product.Attributes.Databaseengine == 0 {
 					continue
 				}
-				serverlessV2.Databaseengine = dbEngine
+				serverlessV2.Databaseengine = product.Attributes.Databaseengine
 
 				db.Create(&serverlessV2)
 			}
 			continue
 		}
-		dbEngine := exchangeDBEngine(product.Attributes.Databaseengine)
-		if dbEngine == "" {
+		if product.Attributes.Databaseengine == 0 {
 			continue
 		}
-		product.Attributes.Databaseengine = dbEngine
 		product.Attributes.ID = product.Sku
 		awsInstances = append(awsInstances, product.Attributes)
 		i++
@@ -182,25 +183,54 @@ func ImportRDSTerms(decoder *json.Decoder, db *gorm.DB) {
 				for _, price := range prices {
 					for sku, p := range price {
 						for _, detail := range p.PriceDimensions {
-							ondemandPrice, err := strconv.ParseFloat(detail.PricePerUnit["USD"], 64)
-							if err != nil {
-								log.Fatal(err, "8")
-							}
-							ondemandPriceNull := sql.NullFloat64{Float64: ondemandPrice, Valid: true}
-
-							if strings.Contains(detail.Description, "Serverless v2") {
-								if err := tx.Where("id = ?", sku[0:strings.Index(sku, ".")]).
-									Updates(models.AwsAuroraServerless{
-										Ondemandprice: ondemandPriceNull,
-									}).Error; err != nil {
-									panic(err)
+							if p.TermAttributes.PurchaseOption == "Partial Upfront" || p.TermAttributes.PurchaseOption == "No Upfront" {
+								continue
+							} else if p.TermAttributes.LeaseContractLength == "1yr" && p.TermAttributes.PurchaseOption == "All Upfront" {
+								if oneYPrice, err := strconv.ParseFloat(detail.PricePerUnit["USD"], 64); err != nil {
+									log.Fatal(err, "8")
+								} else if oneYPrice == 0 {
+									continue
+								} else {
+									if err := tx.Where("id = ?", p.Sku).
+										Updates(models.AwsRdsInstance{
+											OneYearReservedStandardPrice: models.StringFloat(oneYPrice),
+										}).Error; err != nil {
+										panic(err)
+									}
+								}
+							} else if p.TermAttributes.LeaseContractLength == "3yr" && p.TermAttributes.PurchaseOption == "All Upfront" {
+								if threeYPrice, err := strconv.ParseFloat(detail.PricePerUnit["USD"], 64); err != nil {
+									log.Fatal(err, "8")
+								} else if threeYPrice == 0 {
+									continue
+								} else {
+									if err := tx.Where("id = ?", p.Sku).
+										Updates(models.AwsRdsInstance{
+											ThreeYearReservedStandardPrice: models.StringFloat(threeYPrice),
+										}).Error; err != nil {
+										panic(err)
+									}
 								}
 							} else {
-								if err := tx.Where("id = ?", sku[0:strings.Index(sku, ".")]).
-									Updates(models.AwsRdsInstance{
-										Ondemandprice: ondemandPriceNull,
-									}).Error; err != nil {
-									panic(err)
+								ondemandPrice, err := strconv.ParseFloat(detail.PricePerUnit["USD"], 64)
+								if err != nil {
+									log.Fatal(err, "8")
+								}
+
+								if strings.Contains(detail.Description, "Serverless v2") {
+									if err := tx.Where("id = ?", sku[0:strings.Index(sku, ".")]).
+										Updates(models.AwsAuroraServerless{
+											Ondemandprice: models.StringFloat(ondemandPrice),
+										}).Error; err != nil {
+										panic(err)
+									}
+								} else {
+									if err := tx.Where("id = ?", sku[0:strings.Index(sku, ".")]).
+										Updates(models.AwsRdsInstance{
+											Ondemandprice: models.StringFloat(ondemandPrice),
+										}).Error; err != nil {
+										panic(err)
+									}
 								}
 							}
 						}
@@ -218,8 +248,10 @@ func ImportRDSTerms(decoder *json.Decoder, db *gorm.DB) {
 	}
 }
 
+var isPassdReServe bool
+
 func getPriceSlice(decoder *json.Decoder, len int) ([]models.PriceDimensions, error) {
-	var err error
+	var isCheckPoint bool
 	var prices []models.PriceDimensions
 	for i := 0; i < len; i++ {
 		// キーを読み込む
@@ -227,9 +259,13 @@ func getPriceSlice(decoder *json.Decoder, len int) ([]models.PriceDimensions, er
 			break
 		}
 
-		_, err = decoder.Token()
+		t, err := decoder.Token()
 		if err != nil {
 			log.Fatal(err, "4")
+		}
+		if fmt.Sprintf("%s", t) == "Z2SXQAG6DRKRUQAT" {
+			fmt.Println("found Z2SXQAG6DRKRUQAT")
+			isCheckPoint = true
 		}
 
 		// 値を読み込む
@@ -239,28 +275,40 @@ func getPriceSlice(decoder *json.Decoder, len int) ([]models.PriceDimensions, er
 			log.Fatal(err, "7")
 		}
 		prices = append(prices, price)
+
+		// Reservedの処理
+		if isCheckPoint && !isPassdReServe {
+			t, err = decoder.Token() // '{' トークンを消費
+			fmt.Println(t)
+			t, err = decoder.Token() // 'Reserved' トークンを消費
+			fmt.Println(t)
+			t, err = decoder.Token() // 'OnDemand' トークンを消費
+			fmt.Println(t)
+			isPassdReServe = true
+			isCheckPoint = false
+			return prices, nil
+		}
 	}
 	return prices, nil
 }
 
-func exchangeDBEngine(os string) string {
+func exchangeDBEngine(os string) models.DatabaseEngine {
 	switch os {
-
 	case "Aurora MySQL":
-		return "aurora-mysql"
+		return models.DatabaseEngineAuroraMysql
 	case "Aurora PostgreSQL":
-		return "aurora-postgresql"
-	case "MariaDB":
-		return "mariadb"
+		return models.DatabaseEngineAuroraPostgresql
+	// case "MariaDB":
+	// 	return "mariadb"
 	case "MySQL":
-		return "mysql"
-	case "Oracle":
-		return "oracle"
+		return models.DatabaseEngineMysql
+	// case "Oracle":
+	// 	return "oracle"
 	case "PostgreSQL":
-		return "postgresql"
-	case "SQL Server":
-		return "sqlserver"
+		return models.DatabaseEnginePostgresql
+	// case "SQL Server":
+	// 	return "sqlserver"
 	default:
-		return ""
+		return 0
 	}
 }

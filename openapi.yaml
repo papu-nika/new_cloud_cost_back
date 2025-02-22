@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.1
 info:
   title: Cloud Cost Management API
   description: API for managing cloud costs, tracking usage, and organizing services into projects.
@@ -18,12 +18,17 @@ paths:
           in: query
           description: Filter instance by region
           schema:
-            $ref: "#/components/schemas/Region"
+            $ref: "#/components/schemas/AWSRegion"
         - name: os
           in: query
           description: Filter instance by name
           schema:
             $ref: "#/components/schemas/os"
+        - name: instancetype
+          in: query
+          description: Filter instance by type
+          schema:
+            type: string
       responses:
         "200":
           description: List of instance
@@ -36,48 +41,224 @@ paths:
                   properties:
                     id:
                       type: string
-                    regioncode:
-                      type: string
                     instancetype:
                       type: string
                     instancefamily:
                       type: string
                     vcpu:
                       type: number
-                    physicalprocessor:
-                      type: string
-                    clockspeed:
-                      type: string
                     memory:
                       type: number
-                    storage:
-                      type: string
-                    networkperformance:
-                      type: string
-                    operatingsystem:
-                      type: string
-                    tenancy:
-                      type: string
-                    dedicatedebsthroughput:
-                      type: string
-                    ecu:
-                      type: string
-                    gpumemory:
-                      type: string
-                    processorfeatures:
-                      type: string
                     ondemandprice:
-                      type: number
-                    one_year_reserved_standard_price:
-                      type: number
-                    three_year_reserved_standard_price:
-                      type: number
-                    one_year_reserved_convertible_price:
-                      type: number
-                    three_year_reserved_convertible_price:
                       type: number
         "400":
           description: Invalid input
+
+  /aws/ec2/instances/{instance_sku}:
+    get:
+      summary: Get EC2 instance cost by SKU
+      parameters:
+        - name: instance_sku
+          in: path
+          required: true
+          description: The SKU of the EC2 instance
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Instance cost
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  region:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:regioncode"
+                  instance_type:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:instancetype"
+                  instance_family:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:instancefamily"
+                  vcpu:
+                    type: number
+                  physical_processor:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:physicalprocessor"
+                  clockspeed:
+                    type: string
+                  memory:
+                    type: number
+                  storage:
+                    type: string
+                  networkper_formance:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:networkperformance"
+                  os:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:operatingsystem"
+                  dedicatedebs_throughput:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:dedicatedebsthroughput"
+                  ecu:
+                    type: number
+                  gpu_memory:
+                    type: number
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:gpumemory"
+                  processor_features:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:processorfeatures"
+                  ondemand_price:
+                    type: number
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:ondemandprice"
+                  one_year_reserved_standard_price:
+                    type: number
+                  three_year_reserved_standard_price:
+                    type: number
+                  one_year_reserved_convertible_price:
+                    type: number
+                  three_year_reserved_convertible_price:
+                    type: number
+        "404":
+          description: Instance not found
+
+  /aws/rds/instances:
+    get:
+      summary: Get AWS RDS instances cost with optional filtering
+      parameters:
+        - name: region
+          in: query
+          description: Filter instance by region
+          schema:
+            $ref: "#/components/schemas/AWSRegion"
+        - name: engine
+          in: query
+          description: Filter instance by engine
+          schema:
+            $ref: "#/components/schemas/awsRDSEngine"
+        - name: instancetype
+          in: query
+          description: Filter instance by type
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of instance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    instance_type:
+                      type: string
+                      x-oapi-codegen-extra-tags:
+                        gorm: "column:instancetype"
+                    instance_family:
+                      type: string
+                      x-oapi-codegen-extra-tags:
+                        gorm: "column:instancefamily"
+                    database_engine:
+                      type: string
+                      x-oapi-codegen-extra-tags:
+                        gorm: "column:databaseengine"
+                    regioncode:
+                      type: string
+                    vcpu:
+                      type: number
+                    memory:
+                      type: number
+                    ondemandprice:
+                      type: number
+                      x-oapi-codegen-extra-tags:
+                        gorm: "column:ondemandprice"
+        "400":
+          description: Invalid input
+
+
+  /aws/rds/instances/{instance_sku}:
+    get:
+      summary: Get RDS instance cost by SKU
+      parameters:
+        - name: instance_sku
+          in: path
+          required: true
+          description: The SKU of the RDS instance
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Instance cost
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  region:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:regioncode"
+                  instance_type:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:instancetype"
+                  instance_family:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:instancefamily"
+                  vcpu:
+                    type: number
+                  physical_processor:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:physicalprocessor"
+                  clockspeed:
+                    type: string
+                  memory:
+                    type: number
+                  storage:
+                    type: string
+                  networkper_formance:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:networkperformance"
+                  database_engine:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:databaseengine"
+                  dedicated_ebs_throughput:
+                    type: string
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:dedicatedebsthroughput"
+                  ondemand_price:
+                    type: number
+                    x-oapi-codegen-extra-tags:
+                      gorm: "column:ondemandprice"
+                  one_year_reserved_standard_price:
+                    type: number
+                  three_year_reserved_standard_price:
+                    type: number
+        "404":
+          description: Instance not found
+
 
 components:
   securitySchemes:
@@ -86,7 +267,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    RegionEnum:
+    AWSRegionEnum:
       type: string
       enum:
         - ap-south-1
@@ -122,23 +303,21 @@ components:
         - me-south-1
       x-oapi-codegen-extra-tags:
         validate: "oneof=ap-south-1 ap-south-2 ap-northeast-1 ap-northeast-2 ap-northeast-3 ap-southeast-1 ap-southeast-2 ap-southeast-3 ap-southeast-4 ap-east-1 us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 ca-west-1 us-gov-east-1 us-gov-west-1 sa-east-1 eu-west-1 eu-west-2 eu-west-3 eu-central-1 eu-central-2 eu-north-1 eu-south-1 eu-south-2 il-central-1 af-south-1 me-central-1 me-south-1"
-    Region:
+    AWSRegion:
       type: object
       required:
         - region
       properties:
         region:
-          $ref: "#/components/schemas/RegionEnum"
+          $ref: "#/components/schemas/AWSRegionEnum"
 
     osEnum:
       type: string
       enum:
         - linux
         - windows
-        - ubuntu-pro
-        - rhel
       x-oapi-codegen-extra-tags:
-        validate: "oneof=linux windows ubuntu-pro rhel"
+        validate: "oneof=linux windows"
     os:
       type: object
       required:
@@ -146,3 +325,20 @@ components:
       properties:
         os:
           $ref: "#/components/schemas/osEnum"
+
+    awsRDSEngineEnum:
+      type: string
+      enum:
+        - aurora_mysql
+        - aurora_postgresql
+        - mysql
+        - postgresql
+      x-oapi-codegen-extra-tags:
+        validate: "oneof=aurora_mysql aurora_postgresql mysql postgresql"
+    awsRDSEngine:
+      type: object
+      required:
+        - engine
+      properties:
+        engine:
+          $ref: "#/components/schemas/awsRDSEngineEnum"

@@ -4,27 +4,26 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // AwsRdsInstance represents a row from 'public.aws_rds_instances'.
 type AwsRdsInstance struct {
-	ID                     string          `json:"id" gorm:"column:id"`                                         // id
-	Regioncode             string          `json:"regioncode" gorm:"column:regioncode"`                         // regioncode
-	Instancetype           string          `json:"instancetype" gorm:"column:instancetype"`                     // instancetype
-	Instancefamily         string          `json:"instancefamily" gorm:"column:instancefamily"`                 // instancefamily
-	Vcpu                   StringInt       `json:"vcpu" gorm:"column:vcpu"`                                     // vcpu
-	Physicalprocessor      string          `json:"physicalprocessor" gorm:"column:physicalprocessor"`           // physicalprocessor
-	Clockspeed             string          `json:"clockspeed" gorm:"column:clockspeed"`                         // clockspeed
-	Memory                 StringFloat     `json:"memory" gorm:"column:memory"`                                 // memory
-	Storage                string          `json:"storage" gorm:"column:storage"`                               // storage
-	Networkperformance     string          `json:"networkperformance" gorm:"column:networkperformance"`         // networkperformance
-	Databaseengine         string          `json:"databaseengine" gorm:"column:databaseengine"`                 // databaseengine
-	Licensemodel           string          `json:"licensemodel" gorm:"column:licensemodel"`                     // licensemodel
-	Operation              string          `json:"operation" gorm:"column:operation"`                           // operation
-	Deploymentoption       string          `json:"deploymentoption" gorm:"column:deploymentoption"`             // deploymentoption
-	Dedicatedebsthroughput string          `json:"dedicatedebsthroughput" gorm:"column:dedicatedebsthroughput"` // dedicatedebsthroughput
-	Ondemandprice          sql.NullFloat64 `json:"ondemandprice" gorm:"column:ondemandprice"`                   // ondemandprice
+	ID                             string         `json:"id" gorm:"column:id"`                                                                 // id
+	Instancetype                   string         `json:"instancetype" gorm:"column:instancetype"`                                             // instancetype
+	Instancefamily                 string         `json:"instancefamily" gorm:"column:instancefamily"`                                         // instancefamily
+	Vcpu                           StringInt      `json:"vcpu" gorm:"column:vcpu"`                                                             // vcpu
+	Physicalprocessor              string         `json:"physicalprocessor" gorm:"column:physicalprocessor"`                                   // physicalprocessor
+	Clockspeed                     string         `json:"clockspeed" gorm:"column:clockspeed"`                                                 // clockspeed
+	Memory                         StringFloat    `json:"memory" gorm:"column:memory"`                                                         // memory
+	Storage                        string         `json:"storage" gorm:"column:storage"`                                                       // storage
+	Networkperformance             string         `json:"networkperformance" gorm:"column:networkperformance"`                                 // networkperformance
+	Deploymentoption               string         `json:"deploymentoption" gorm:"column:deploymentoption"`                                     // deploymentoption
+	Dedicatedebsthroughput         string         `json:"dedicatedebsthroughput" gorm:"column:dedicatedebsthroughput"`                         // dedicatedebsthroughput
+	Ondemandprice                  StringFloat    `json:"ondemandprice" gorm:"column:ondemandprice"`                                           // ondemandprice
+	Regioncode                     AwsRegion      `json:"regioncode" gorm:"column:regioncode"`                                                 // regioncode
+	OneYearReservedStandardPrice   StringFloat    `json:"one_year_reserved_standard_price" gorm:"column:one_year_reserved_standard_price"`     // one_year_reserved_standard_price
+	ThreeYearReservedStandardPrice StringFloat    `json:"three_year_reserved_standard_price" gorm:"column:three_year_reserved_standard_price"` // three_year_reserved_standard_price
+	Databaseengine                 DatabaseEngine `json:"databaseengine" gorm:"column:databaseengine"`                                         // databaseengine
 	// xo fields
 	_exists, _deleted bool
 }
@@ -50,13 +49,13 @@ func (ari *AwsRdsInstance) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (manual)
 	const sqlstr = `INSERT INTO public.aws_rds_instances (` +
-		`id, regioncode, instancetype, instancefamily, vcpu, physicalprocessor, clockspeed, memory, storage, networkperformance, databaseengine, licensemodel, operation, deploymentoption, dedicatedebsthroughput, ondemandprice` +
+		`id, instancetype, instancefamily, vcpu, physicalprocessor, clockspeed, memory, storage, networkperformance, deploymentoption, dedicatedebsthroughput, ondemandprice, regioncode, one_year_reserved_standard_price, three_year_reserved_standard_price, databaseengine` +
 		`) VALUES (` +
 		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16` +
 		`)`
 	// run
-	logf(sqlstr, ari.ID, ari.Regioncode, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Databaseengine, ari.Licensemodel, ari.Operation, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice)
-	if _, err := db.ExecContext(ctx, sqlstr, ari.ID, ari.Regioncode, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Databaseengine, ari.Licensemodel, ari.Operation, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice); err != nil {
+	logf(sqlstr, ari.ID, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.Regioncode, ari.OneYearReservedStandardPrice, ari.ThreeYearReservedStandardPrice, ari.Databaseengine)
+	if _, err := db.ExecContext(ctx, sqlstr, ari.ID, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.Regioncode, ari.OneYearReservedStandardPrice, ari.ThreeYearReservedStandardPrice, ari.Databaseengine); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -74,11 +73,11 @@ func (ari *AwsRdsInstance) Update(ctx context.Context, db DB) error {
 	}
 	// update with composite primary key
 	const sqlstr = `UPDATE public.aws_rds_instances SET ` +
-		`regioncode = $1, instancetype = $2, instancefamily = $3, vcpu = $4, physicalprocessor = $5, clockspeed = $6, memory = $7, storage = $8, networkperformance = $9, databaseengine = $10, licensemodel = $11, operation = $12, deploymentoption = $13, dedicatedebsthroughput = $14, ondemandprice = $15 ` +
+		`instancetype = $1, instancefamily = $2, vcpu = $3, physicalprocessor = $4, clockspeed = $5, memory = $6, storage = $7, networkperformance = $8, deploymentoption = $9, dedicatedebsthroughput = $10, ondemandprice = $11, regioncode = $12, one_year_reserved_standard_price = $13, three_year_reserved_standard_price = $14, databaseengine = $15 ` +
 		`WHERE id = $16`
 	// run
-	logf(sqlstr, ari.Regioncode, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Databaseengine, ari.Licensemodel, ari.Operation, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, ari.Regioncode, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Databaseengine, ari.Licensemodel, ari.Operation, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.ID); err != nil {
+	logf(sqlstr, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.Regioncode, ari.OneYearReservedStandardPrice, ari.ThreeYearReservedStandardPrice, ari.Databaseengine, ari.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.Regioncode, ari.OneYearReservedStandardPrice, ari.ThreeYearReservedStandardPrice, ari.Databaseengine, ari.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -100,16 +99,16 @@ func (ari *AwsRdsInstance) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO public.aws_rds_instances (` +
-		`id, regioncode, instancetype, instancefamily, vcpu, physicalprocessor, clockspeed, memory, storage, networkperformance, databaseengine, licensemodel, operation, deploymentoption, dedicatedebsthroughput, ondemandprice` +
+		`id, instancetype, instancefamily, vcpu, physicalprocessor, clockspeed, memory, storage, networkperformance, deploymentoption, dedicatedebsthroughput, ondemandprice, regioncode, one_year_reserved_standard_price, three_year_reserved_standard_price, databaseengine` +
 		`) VALUES (` +
 		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16` +
 		`)` +
 		` ON CONFLICT (id) DO ` +
 		`UPDATE SET ` +
-		`regioncode = EXCLUDED.regioncode, instancetype = EXCLUDED.instancetype, instancefamily = EXCLUDED.instancefamily, vcpu = EXCLUDED.vcpu, physicalprocessor = EXCLUDED.physicalprocessor, clockspeed = EXCLUDED.clockspeed, memory = EXCLUDED.memory, storage = EXCLUDED.storage, networkperformance = EXCLUDED.networkperformance, databaseengine = EXCLUDED.databaseengine, licensemodel = EXCLUDED.licensemodel, operation = EXCLUDED.operation, deploymentoption = EXCLUDED.deploymentoption, dedicatedebsthroughput = EXCLUDED.dedicatedebsthroughput, ondemandprice = EXCLUDED.ondemandprice `
+		`instancetype = EXCLUDED.instancetype, instancefamily = EXCLUDED.instancefamily, vcpu = EXCLUDED.vcpu, physicalprocessor = EXCLUDED.physicalprocessor, clockspeed = EXCLUDED.clockspeed, memory = EXCLUDED.memory, storage = EXCLUDED.storage, networkperformance = EXCLUDED.networkperformance, deploymentoption = EXCLUDED.deploymentoption, dedicatedebsthroughput = EXCLUDED.dedicatedebsthroughput, ondemandprice = EXCLUDED.ondemandprice, regioncode = EXCLUDED.regioncode, one_year_reserved_standard_price = EXCLUDED.one_year_reserved_standard_price, three_year_reserved_standard_price = EXCLUDED.three_year_reserved_standard_price, databaseengine = EXCLUDED.databaseengine `
 	// run
-	logf(sqlstr, ari.ID, ari.Regioncode, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Databaseengine, ari.Licensemodel, ari.Operation, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice)
-	if _, err := db.ExecContext(ctx, sqlstr, ari.ID, ari.Regioncode, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Databaseengine, ari.Licensemodel, ari.Operation, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice); err != nil {
+	logf(sqlstr, ari.ID, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.Regioncode, ari.OneYearReservedStandardPrice, ari.ThreeYearReservedStandardPrice, ari.Databaseengine)
+	if _, err := db.ExecContext(ctx, sqlstr, ari.ID, ari.Instancetype, ari.Instancefamily, ari.Vcpu, ari.Physicalprocessor, ari.Clockspeed, ari.Memory, ari.Storage, ari.Networkperformance, ari.Deploymentoption, ari.Dedicatedebsthroughput, ari.Ondemandprice, ari.Regioncode, ari.OneYearReservedStandardPrice, ari.ThreeYearReservedStandardPrice, ari.Databaseengine); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -144,7 +143,7 @@ func (ari *AwsRdsInstance) Delete(ctx context.Context, db DB) error {
 func AwsRdsInstanceByID(ctx context.Context, db DB, id string) (*AwsRdsInstance, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, regioncode, instancetype, instancefamily, vcpu, physicalprocessor, clockspeed, memory, storage, networkperformance, databaseengine, licensemodel, operation, deploymentoption, dedicatedebsthroughput, ondemandprice ` +
+		`id, instancetype, instancefamily, vcpu, physicalprocessor, clockspeed, memory, storage, networkperformance, deploymentoption, dedicatedebsthroughput, ondemandprice, regioncode, one_year_reserved_standard_price, three_year_reserved_standard_price, databaseengine ` +
 		`FROM public.aws_rds_instances ` +
 		`WHERE id = $1`
 	// run
@@ -152,7 +151,7 @@ func AwsRdsInstanceByID(ctx context.Context, db DB, id string) (*AwsRdsInstance,
 	ari := AwsRdsInstance{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&ari.ID, &ari.Regioncode, &ari.Instancetype, &ari.Instancefamily, &ari.Vcpu, &ari.Physicalprocessor, &ari.Clockspeed, &ari.Memory, &ari.Storage, &ari.Networkperformance, &ari.Databaseengine, &ari.Licensemodel, &ari.Operation, &ari.Deploymentoption, &ari.Dedicatedebsthroughput, &ari.Ondemandprice); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&ari.ID, &ari.Instancetype, &ari.Instancefamily, &ari.Vcpu, &ari.Physicalprocessor, &ari.Clockspeed, &ari.Memory, &ari.Storage, &ari.Networkperformance, &ari.Deploymentoption, &ari.Dedicatedebsthroughput, &ari.Ondemandprice, &ari.Regioncode, &ari.OneYearReservedStandardPrice, &ari.ThreeYearReservedStandardPrice, &ari.Databaseengine); err != nil {
 		return nil, logerror(err)
 	}
 	return &ari, nil

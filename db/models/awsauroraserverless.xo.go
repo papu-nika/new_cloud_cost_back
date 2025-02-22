@@ -5,16 +5,15 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // AwsAuroraServerless represents a row from 'public.aws_aurora_serverlesses'.
 type AwsAuroraServerless struct {
-	ID                         string          `json:"id" gorm:"column:id"`                                                 // id
-	Regioncode                 string          `json:"regioncode" gorm:"column:regioncode"`                                 // regioncode
-	Isauroraiooptimizationmode bool            `json:"isauroraiooptimizationmode" gorm:"column:isauroraiooptimizationmode"` // isauroraiooptimizationmode
-	Databaseengine             string          `json:"databaseengine" gorm:"column:databaseengine"`                         // databaseengine
-	Ondemandprice              sql.NullFloat64 `json:"ondemandprice" gorm:"column:ondemandprice"`                           // ondemandprice
+	ID                         string         `json:"id" gorm:"column:id"`                                                 // id
+	Isauroraiooptimizationmode bool           `json:"isauroraiooptimizationmode" gorm:"column:isauroraiooptimizationmode"` // isauroraiooptimizationmode
+	Ondemandprice              StringFloat    `json:"ondemandprice" gorm:"column:ondemandprice"`                           // ondemandprice
+	Regioncode                 AwsRegion      `json:"regioncode" gorm:"column:regioncode"`                                 // regioncode
+	Databaseengine             DatabaseEngine `json:"databaseengine" gorm:"column:databaseengine"`                         // databaseengine
 	// xo fields
 	_exists, _deleted bool
 }
@@ -40,13 +39,13 @@ func (aas *AwsAuroraServerless) Insert(ctx context.Context, db DB) error {
 	}
 	// insert (manual)
 	const sqlstr = `INSERT INTO public.aws_aurora_serverlesses (` +
-		`id, regioncode, isauroraiooptimizationmode, databaseengine, ondemandprice` +
+		`id, isauroraiooptimizationmode, ondemandprice, regioncode, databaseengine` +
 		`) VALUES (` +
 		`$1, $2, $3, $4, $5` +
 		`)`
 	// run
-	logf(sqlstr, aas.ID, aas.Regioncode, aas.Isauroraiooptimizationmode, aas.Databaseengine, aas.Ondemandprice)
-	if _, err := db.ExecContext(ctx, sqlstr, aas.ID, aas.Regioncode, aas.Isauroraiooptimizationmode, aas.Databaseengine, aas.Ondemandprice); err != nil {
+	logf(sqlstr, aas.ID, aas.Isauroraiooptimizationmode, aas.Ondemandprice, aas.Regioncode, aas.Databaseengine)
+	if _, err := db.ExecContext(ctx, sqlstr, aas.ID, aas.Isauroraiooptimizationmode, aas.Ondemandprice, aas.Regioncode, aas.Databaseengine); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -64,11 +63,11 @@ func (aas *AwsAuroraServerless) Update(ctx context.Context, db DB) error {
 	}
 	// update with composite primary key
 	const sqlstr = `UPDATE public.aws_aurora_serverlesses SET ` +
-		`regioncode = $1, isauroraiooptimizationmode = $2, databaseengine = $3, ondemandprice = $4 ` +
+		`isauroraiooptimizationmode = $1, ondemandprice = $2, regioncode = $3, databaseengine = $4 ` +
 		`WHERE id = $5`
 	// run
-	logf(sqlstr, aas.Regioncode, aas.Isauroraiooptimizationmode, aas.Databaseengine, aas.Ondemandprice, aas.ID)
-	if _, err := db.ExecContext(ctx, sqlstr, aas.Regioncode, aas.Isauroraiooptimizationmode, aas.Databaseengine, aas.Ondemandprice, aas.ID); err != nil {
+	logf(sqlstr, aas.Isauroraiooptimizationmode, aas.Ondemandprice, aas.Regioncode, aas.Databaseengine, aas.ID)
+	if _, err := db.ExecContext(ctx, sqlstr, aas.Isauroraiooptimizationmode, aas.Ondemandprice, aas.Regioncode, aas.Databaseengine, aas.ID); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -90,16 +89,16 @@ func (aas *AwsAuroraServerless) Upsert(ctx context.Context, db DB) error {
 	}
 	// upsert
 	const sqlstr = `INSERT INTO public.aws_aurora_serverlesses (` +
-		`id, regioncode, isauroraiooptimizationmode, databaseengine, ondemandprice` +
+		`id, isauroraiooptimizationmode, ondemandprice, regioncode, databaseengine` +
 		`) VALUES (` +
 		`$1, $2, $3, $4, $5` +
 		`)` +
 		` ON CONFLICT (id) DO ` +
 		`UPDATE SET ` +
-		`regioncode = EXCLUDED.regioncode, isauroraiooptimizationmode = EXCLUDED.isauroraiooptimizationmode, databaseengine = EXCLUDED.databaseengine, ondemandprice = EXCLUDED.ondemandprice `
+		`isauroraiooptimizationmode = EXCLUDED.isauroraiooptimizationmode, ondemandprice = EXCLUDED.ondemandprice, regioncode = EXCLUDED.regioncode, databaseengine = EXCLUDED.databaseengine `
 	// run
-	logf(sqlstr, aas.ID, aas.Regioncode, aas.Isauroraiooptimizationmode, aas.Databaseengine, aas.Ondemandprice)
-	if _, err := db.ExecContext(ctx, sqlstr, aas.ID, aas.Regioncode, aas.Isauroraiooptimizationmode, aas.Databaseengine, aas.Ondemandprice); err != nil {
+	logf(sqlstr, aas.ID, aas.Isauroraiooptimizationmode, aas.Ondemandprice, aas.Regioncode, aas.Databaseengine)
+	if _, err := db.ExecContext(ctx, sqlstr, aas.ID, aas.Isauroraiooptimizationmode, aas.Ondemandprice, aas.Regioncode, aas.Databaseengine); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -134,7 +133,7 @@ func (aas *AwsAuroraServerless) Delete(ctx context.Context, db DB) error {
 func AwsAuroraServerlessByID(ctx context.Context, db DB, id string) (*AwsAuroraServerless, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`id, regioncode, isauroraiooptimizationmode, databaseengine, ondemandprice ` +
+		`id, isauroraiooptimizationmode, ondemandprice, regioncode, databaseengine ` +
 		`FROM public.aws_aurora_serverlesses ` +
 		`WHERE id = $1`
 	// run
@@ -142,7 +141,7 @@ func AwsAuroraServerlessByID(ctx context.Context, db DB, id string) (*AwsAuroraS
 	aas := AwsAuroraServerless{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&aas.ID, &aas.Regioncode, &aas.Isauroraiooptimizationmode, &aas.Databaseengine, &aas.Ondemandprice); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, id).Scan(&aas.ID, &aas.Isauroraiooptimizationmode, &aas.Ondemandprice, &aas.Regioncode, &aas.Databaseengine); err != nil {
 		return nil, logerror(err)
 	}
 	return &aas, nil

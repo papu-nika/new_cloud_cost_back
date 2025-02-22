@@ -70,6 +70,7 @@ func (sf *StringFloat) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	str = strings.TrimSuffix(str, " GiB")
+	str = strings.TrimSuffix(str, " GB")
 	f, err := strconv.ParseFloat(str, 64)
 	if err != nil {
 		*sf = 0
@@ -77,4 +78,34 @@ func (sf *StringFloat) UnmarshalJSON(data []byte) error {
 		*sf = StringFloat(f)
 	}
 	return nil
+}
+
+func (si *AwsRegion) MarshalJSON() ([]byte, error) {
+	return json.Marshal(si.String())
+}
+
+func (si *AwsRegion) UnmarshalJSON(data []byte) error {
+	return si.UnmarshalText(data[1 : len(data)-1])
+}
+
+// func (de *DatabaseEngine) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(de.String())
+// }
+
+func (de *DatabaseEngine) UnmarshalJSON(data []byte) error {
+	var err error
+	switch string(data[1 : len(data)-1]) {
+	case "Aurora MySQL":
+		err = de.UnmarshalText([]byte("aurora-mysql"))
+	case "Aurora PostgreSQL":
+		err = de.UnmarshalText([]byte("aurora-postgresql"))
+	case "MySQL":
+		err = de.UnmarshalText([]byte("mysql"))
+	case "PostgreSQL":
+		*de = DatabaseEnginePostgresql
+	default:
+		err = ErrInvalidDatabaseEngine(string(data))
+		return nil
+	}
+	return err
 }

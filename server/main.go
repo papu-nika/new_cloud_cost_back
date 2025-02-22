@@ -29,15 +29,105 @@ func (s *Server) GetAwsEc2Instances(c *gin.Context, params api.GetAwsEc2Instance
 	}
 
 	var instaneModel models.AwsEc2Inctance
-	instaneModel.Operatingsystem = string(params.Os.Os)
-	instaneModel.Regioncode = string(params.Region.Region)
+	if params.Os != nil {
+		var os models.Os
+		os.Scan(params.Os)
+		instaneModel.Operatingsystem = os
+	} else {
+		// Default linux
+		instaneModel.Operatingsystem = models.OsLinux
+	}
+
+	var awsRegion models.AwsRegion
+	awsRegion.Scan(params.Region)
+	if awsRegion != 0 {
+		instaneModel.Regioncode = awsRegion
+	} else {
+		// Default ap-northeast-1
+		instaneModel.Regioncode = models.AwsRegionApNortheast1
+	}
+
+	if params.Instancetype != nil {
+		instaneModel.Instancetype = *params.Instancetype
+
+	}
 
 	var awsEc2Instances api.GetAwsEc2Instances200JSONResponse
-	awsEc2Instances.VisitGetAwsEc2InstancesResponse(c.Writer)
-
 	db.DB.Model(instaneModel).Where(&instaneModel).Find(&awsEc2Instances)
-	c.JSON(200, awsEc2Instances)
-	return
+
+	awsEc2Instances.VisitGetAwsEc2InstancesResponse(c.Writer)
+}
+
+func (s *Server) GetAwsEc2InstancesInstanceSku(c *gin.Context, instanceSKU string) {
+	var awsEc2Instance api.GetAwsEc2InstancesInstanceSku200JSONResponse
+
+	var instaneModel models.AwsEc2Inctance
+	instaneModel.ID = instanceSKU
+	db.DB.Debug().Model(instaneModel).Where(&instaneModel).First(&awsEc2Instance)
+	if awsEc2Instance.Id == nil || *awsEc2Instance.Id == "" {
+		resp := api.GetAwsEc2InstancesInstanceSku404Response{}.VisitGetAwsEc2InstancesInstanceSkuResponse(c.Writer)
+		c.JSON(404, resp)
+		return
+	}
+
+	awsEc2Instance.VisitGetAwsEc2InstancesInstanceSkuResponse(c.Writer)
+}
+
+func (s *Server) GetAwsRdsInstances(c *gin.Context, params api.GetAwsRdsInstancesParams) {
+	if err := s.Validate(c, params); err != nil {
+		var resp api.GetAwsRdsInstances400Response
+		if err := resp.VisitGetAwsRdsInstancesResponse(c.Writer); err != nil {
+			c.JSON(500, gin.H{"error": "failed to get response"})
+		} else {
+			c.JSON(400, resp)
+		}
+		slog.Debug(err.Error())
+		return
+	}
+
+	var instaneModel models.AwsRdsInstance
+	if params.Engine != nil {
+		var engine models.DatabaseEngine
+		engine.Scan(params.Engine)
+		instaneModel.Databaseengine = engine
+	} else {
+		// Default linux
+		instaneModel.Databaseengine = models.DatabaseEngineAuroraPostgresql
+	}
+
+	var awsRegion models.AwsRegion
+	awsRegion.Scan(params.Region)
+	if awsRegion != 0 {
+		instaneModel.Regioncode = awsRegion
+	} else {
+		// Default ap-northeast-1
+		instaneModel.Regioncode = models.AwsRegionApNortheast1
+	}
+
+	if params.Instancetype != nil {
+		instaneModel.Instancetype = *params.Instancetype
+
+	}
+
+	var awsEc2Instances api.GetAwsRdsInstances200JSONResponse
+	db.DB.Model(instaneModel).Where(&instaneModel).Find(&awsEc2Instances)
+
+	awsEc2Instances.VisitGetAwsRdsInstancesResponse(c.Writer)
+}
+
+func (s *Server) GetAwsRdsInstancesInstanceSku(c *gin.Context, instanceSKU string) {
+	var awsEc2Instance api.GetAwsRdsInstancesInstanceSku200JSONResponse
+
+	var instaneModel models.AwsRdsInstance
+	instaneModel.ID = instanceSKU
+	db.DB.Debug().Model(instaneModel).Where(&instaneModel).First(&awsEc2Instance)
+	if awsEc2Instance.Id == nil || *awsEc2Instance.Id == "" {
+		resp := api.GetAwsEc2InstancesInstanceSku404Response{}.VisitGetAwsEc2InstancesInstanceSkuResponse(c.Writer)
+		c.JSON(404, resp)
+		return
+	}
+
+	awsEc2Instance.VisitGetAwsRdsInstancesInstanceSkuResponse(c.Writer)
 }
 
 func (s *Server) Validate(c *gin.Context, param interface{}) error {
