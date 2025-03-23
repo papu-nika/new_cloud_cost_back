@@ -14,14 +14,20 @@ type LambdaType uint16
 const (
 	// LambdaTypeDuration is the 'duration' lambda_type.
 	LambdaTypeDuration LambdaType = 1
-	// LambdaTypeProvisioned is the 'provisioned' lambda_type.
-	LambdaTypeProvisioned LambdaType = 2
 	// LambdaTypeEdgeDuration is the 'edge-duration' lambda_type.
 	LambdaTypeEdgeDuration LambdaType = 3
 	// LambdaTypeEdgeRequest is the 'edge-request' lambda_type.
 	LambdaTypeEdgeRequest LambdaType = 4
+	// LambdaTypeProcessed is the 'processed' lambda_type.
+	LambdaTypeProcessed LambdaType = 5
 	// LambdaTypeRequests is the 'requests' lambda_type.
-	LambdaTypeRequests LambdaType = 5
+	LambdaTypeRequests LambdaType = 6
+	// LambdaTypeStorageDutation is the 'storage-dutation' lambda_type.
+	LambdaTypeStorageDutation LambdaType = 7
+	// LambdaTypeProvisionedConcurrency is the 'provisioned-concurrency' lambda_type.
+	LambdaTypeProvisionedConcurrency LambdaType = 8
+	// LambdaTypeProvisionedDuration is the 'provisioned-duration' lambda_type.
+	LambdaTypeProvisionedDuration LambdaType = 2
 )
 
 // String satisfies the [fmt.Stringer] interface.
@@ -29,14 +35,20 @@ func (lt LambdaType) String() string {
 	switch lt {
 	case LambdaTypeDuration:
 		return "duration"
-	case LambdaTypeProvisioned:
-		return "provisioned"
 	case LambdaTypeEdgeDuration:
 		return "edge-duration"
 	case LambdaTypeEdgeRequest:
 		return "edge-request"
+	case LambdaTypeProcessed:
+		return "processed"
 	case LambdaTypeRequests:
 		return "requests"
+	case LambdaTypeStorageDutation:
+		return "storage-dutation"
+	case LambdaTypeProvisionedConcurrency:
+		return "provisioned-concurrency"
+	case LambdaTypeProvisionedDuration:
+		return "provisioned-duration"
 	}
 	return fmt.Sprintf("LambdaType(%d)", lt)
 }
@@ -51,14 +63,20 @@ func (lt *LambdaType) UnmarshalText(buf []byte) error {
 	switch str := string(buf); str {
 	case "duration":
 		*lt = LambdaTypeDuration
-	case "provisioned":
-		*lt = LambdaTypeProvisioned
 	case "edge-duration":
 		*lt = LambdaTypeEdgeDuration
 	case "edge-request":
 		*lt = LambdaTypeEdgeRequest
+	case "processed":
+		*lt = LambdaTypeProcessed
 	case "requests":
 		*lt = LambdaTypeRequests
+	case "storage-dutation":
+		*lt = LambdaTypeStorageDutation
+	case "provisioned-concurrency":
+		*lt = LambdaTypeProvisionedConcurrency
+	case "provisioned-duration":
+		*lt = LambdaTypeProvisionedDuration
 	default:
 		return ErrInvalidLambdaType(str)
 	}

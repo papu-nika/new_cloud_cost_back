@@ -1,0 +1,25 @@
+version: '3'
+services:
+  db:
+    build: ./psql
+    environment:
+      POSTGRES_PASSWORD: adminadmin
+      POSTGRES_USER: postgres
+      POSTGRES_DB: cloud_cost 
+    ports:
+      - "5432:5432"
+    volumes:
+      - cloud_cost.db.volume:/var/lib/postgresql/data
+  # dynamodb-local:
+  #   command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+  #   image: "amazon/dynamodb-local:latest"
+  #   container_name: dynamodb-local
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - "./docker/dynamodb:/home/dynamodblocal/data"
+  #   working_dir: /home/dynamodblocal
+
+volumes:
+  cloud_cost.db.volume:
+    name: cloud_cost.db.volume

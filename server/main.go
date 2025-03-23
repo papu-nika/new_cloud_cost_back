@@ -31,7 +31,7 @@ func (s *Server) GetAwsEc2Instances(c *gin.Context, params api.GetAwsEc2Instance
 	var instaneModel models.AwsEc2Inctance
 	if params.Os != nil {
 		var os models.Os
-		os.Scan(params.Os)
+		os.UnmarshalText([]byte(params.Os.Os))
 		instaneModel.Operatingsystem = os
 	} else {
 		// Default linux
@@ -39,7 +39,7 @@ func (s *Server) GetAwsEc2Instances(c *gin.Context, params api.GetAwsEc2Instance
 	}
 
 	var awsRegion models.AwsRegion
-	awsRegion.Scan(params.Region)
+	awsRegion.UnmarshalText([]byte(params.Region.Region))
 	if awsRegion != 0 {
 		instaneModel.Regioncode = awsRegion
 	} else {
@@ -49,11 +49,11 @@ func (s *Server) GetAwsEc2Instances(c *gin.Context, params api.GetAwsEc2Instance
 
 	if params.Instancetype != nil {
 		instaneModel.Instancetype = *params.Instancetype
-
 	}
 
+	fmt.Println("#####", instaneModel.Regioncode, params.Region)
 	var awsEc2Instances api.GetAwsEc2Instances200JSONResponse
-	db.DB.Model(instaneModel).Where(&instaneModel).Find(&awsEc2Instances)
+	db.DB.Model(instaneModel).Where(&instaneModel).Order("vcpu, memory").Find(&awsEc2Instances)
 
 	awsEc2Instances.VisitGetAwsEc2InstancesResponse(c.Writer)
 }
